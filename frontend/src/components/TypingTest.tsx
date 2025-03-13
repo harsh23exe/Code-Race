@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { fetchSnippet } from '../utils/api';
 import styles from '../styles/TypingTest.module.css';
 
 const TypingTest: React.FC = () => {
@@ -11,20 +12,41 @@ const TypingTest: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams ? searchParams.get('language') : null;
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (language) {
-      fetch(`/typing-test/snippet?language=${language}`)
-        .then((response) => response.json())
-        .then((data) => setSnippet(data.snippet));
-    }
+    const loadSnippet = async () => {
+      if (language) {
+        try {
+          const snippet = await fetchSnippet(language);
+          setSnippet(snippet);
+          console.log('Fetched snippet:', snippet);
+        } catch (error) {
+          console.error('Error fetching snippet:', error);
+        }
+      }
+    };
+
+    loadSnippet();
   }, [language]);
 
-  const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.focus();
+    }
+  }, []);
+
+  const handleTyping = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!startTime) {
       setStartTime(Date.now());
     }
-    setTypedText(e.target.value);
+    const { key } = e;
+    if (key === 'Backspace') {
+      setTypedText(typedText.slice(0, -1));
+    } else if (key.length === 1) {
+      setTypedText(typedText + key);
+    }
+    console.log('Typed text:', typedText);
   };
 
   const handleSubmit = () => {
@@ -37,6 +59,7 @@ const TypingTest: React.FC = () => {
   };
 
   const renderSnippet = () => {
+    console.log('Rendering snippet:', snippet);
     return snippet.split('').map((char, index) => {
       let className = '';
       if (index < typedText.length) {
@@ -51,20 +74,15 @@ const TypingTest: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      onKeyDown={handleTyping}
+      tabIndex={0}
+      ref={containerRef}
+    >
       <h1>Typing Test</h1>
       <div className={styles.snippet}>{renderSnippet()}</div>
-      <textarea
-        className={styles.textarea}
-        value={typedText}
-        onChange={handleTyping}
-        onKeyDown={(e) => {
-          if (e.key === 'Backspace') {
-            setTypedText(typedText.slice(0, -1));
-          }
-        }}
-      />
-      <button onClick={handleSubmit}>Submit</button>
+      <button className={styles.button} onClick={handleSubmit}>Submit</button>
     </div>
   );
 };

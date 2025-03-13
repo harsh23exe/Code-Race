@@ -6,7 +6,8 @@ export class CodeSnippetsController {
   constructor(private readonly codeSnippetsService: CodeSnippetsService) {}
 
   @Get('random')
-  getRandomSnippet(@Query('language') language: string): string {
-    return this.codeSnippetsService.getRandomSnippet(language);
+  getRandomSnippet(@Query('language') language: string): { snippet: string } {
+    const snippet = this.codeSnippetsService.getRandomSnippet(language);
+    return { snippet };
   }
 }
