@@ -1,4 +1,19 @@
+.header {
+  background-color: #282a36;
+  color: #f8f8f2;
+  padding: 20px 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  text-align: center;
+}
+
 .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,23 +54,4 @@
 
 .button:hover {
   background-color: #44475a;
-}
-
-.clock {
-  width: 100px;
-  height: 100px;
-  border: 5px solid #6272a4;
-  border-radius: 50%;
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.hand {
-  width: 50%;
-  height: 2px;
-  background-color: #50fa7b;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: left;
 }

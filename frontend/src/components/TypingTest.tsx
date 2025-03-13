@@ -9,6 +9,7 @@ const TypingTest: React.FC = () => {
   const [snippet, setSnippet] = useState('');
   const [typedText, setTypedText] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds timer
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams ? searchParams.get('language') : null;
@@ -36,6 +37,23 @@ const TypingTest: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (startTime) {
+      const timer = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timer);
+            endTest();
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [startTime]);
+
   const handleTyping = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!startTime) {
       setStartTime(Date.now());
@@ -47,13 +65,22 @@ const TypingTest: React.FC = () => {
       setTypedText(typedText + key);
     }
     console.log('Typed text:', typedText);
+
+    if (typedText.length === snippet.length - 1) {
+      endTest();
+    }
   };
 
-  const handleSubmit = () => {
+  const endTest = () => {
     const endTime = Date.now();
     const timeTaken = (endTime - (startTime || 0)) / 1000; // in seconds
     const wordsTyped = typedText.split(' ').length;
     const typingSpeed = (wordsTyped / timeTaken) * 60; // words per minute
+
+    // Store the result in local storage
+    const results = JSON.parse(localStorage.getItem('typingResults') || '[]');
+    results.push({ speed: typingSpeed, timestamp: new Date().toISOString() });
+    localStorage.setItem('typingResults', JSON.stringify(results));
 
     router.push(`/results?speed=${typingSpeed}`);
   };
@@ -73,6 +100,15 @@ const TypingTest: React.FC = () => {
     });
   };
 
+  const renderClock = () => {
+    const rotation = (360 * (60 - timeLeft)) / 60;
+    return (
+      <div className={styles.clock}>
+        <div className={styles.hand} style={{ transform: `rotate(${rotation}deg)` }} />
+      </div>
+    );
+  };
+
   return (
     <div
       className={styles.container}
@@ -81,8 +117,8 @@ const TypingTest: React.FC = () => {
       ref={containerRef}
     >
       <h1>Typing Test</h1>
+      {renderClock()}
       <div className={styles.snippet}>{renderSnippet()}</div>
-      <button className={styles.button} onClick={handleSubmit}>Submit</button>
     </div>
   );
 };
