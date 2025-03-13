@@ -1,9 +1,11 @@
+"use client";
+
 import React from 'react';
-import { useRouter } from 'next/router';
+import { useSearchParams } from 'next/navigation';
 
 const Results: React.FC = () => {
-  const router = useRouter();
-  const { speed } = router.query;
+  const searchParams = useSearchParams();
+  const speed = searchParams ? searchParams.get('speed') : null;
 
   return (
     <div>

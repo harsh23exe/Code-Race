@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import styles from '../styles/TypingTest.module.css';
 
 const TypingTest: React.FC = () => {
   const [snippet, setSnippet] = useState('');
@@ -35,11 +36,34 @@ const TypingTest: React.FC = () => {
     router.push(`/results?speed=${typingSpeed}`);
   };
 
+  const renderSnippet = () => {
+    return snippet.split('').map((char, index) => {
+      let className = '';
+      if (index < typedText.length) {
+        className = char === typedText[index] ? styles.correct : styles.incorrect;
+      }
+      return (
+        <span key={index} className={className}>
+          {char}
+        </span>
+      );
+    });
+  };
+
   return (
-    <div>
+    <div className={styles.container}>
       <h1>Typing Test</h1>
-      <pre>{snippet}</pre>
-      <textarea value={typedText} onChange={handleTyping} />
+      <div className={styles.snippet}>{renderSnippet()}</div>
+      <textarea
+        className={styles.textarea}
+        value={typedText}
+        onChange={handleTyping}
+        onKeyDown={(e) => {
+          if (e.key === 'Backspace') {
+            setTypedText(typedText.slice(0, -1));
+          }
+        }}
+      />
       <button onClick={handleSubmit}>Submit</button>
     </div>
   );
