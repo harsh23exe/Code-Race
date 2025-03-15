@@ -2,11 +2,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  padding-top: 60px; /* Add padding to account for fixed OptionsBar */
+  height: calc(100vh - 60px); /* Adjust based on your navbar height */
+  padding: 0;
+  gap: 2rem;
   margin-top: 50px;
   outline: none;
-  gap: 2rem;
-  padding: 2rem;
-  height: calc(100vh - 120px);
 }
 
 .snippet {
@@ -65,7 +67,9 @@
 
 .header {
   display: flex;
+  justify-content: center;
   gap: 2rem;
+  margin-bottom: 2rem;
   font-size: 1.2rem;
   color: #666;
 }
@@ -105,6 +109,12 @@
   height: 24px;  /* Fixed height instead of 100% */
   background-color: #7aff7a;
   animation: blink 1s step-end infinite;
+}
+
+.optionsContainer {
+  width: 100%;
+  background-color: #2a2a2a;
+  margin-bottom: 2rem;
 }
 
 @keyframes blink {

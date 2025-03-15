@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 import '../styles/globals.css';
 import Navbar from '../components/Navbar';
-import OptionsBar from '../components/OptionsBar';
 import styles from '../styles/Layout.module.css';
 
 interface LayoutProps {
@@ -13,7 +12,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <html>
       <body>
         <Navbar />
-        <OptionsBar />
         <main className={styles.container}>
           {children}
         </main>

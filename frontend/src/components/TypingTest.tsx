@@ -4,12 +4,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchSnippet } from '../utils/api';
 import styles from '../styles/TypingTest.module.css';
+import OptionsBar from './OptionsBar';
 
 const TypingTest: React.FC = () => {
   const [snippet, setSnippet] = useState('');
   const [typedText, setTypedText] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(60); // 60 seconds timer
+  const [currentLanguage, setCurrentLanguage] = useState('JavaScript');
+  const [timerDuration, setTimerDuration] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams ? searchParams.get('language') : null;
@@ -137,6 +140,37 @@ const TypingTest: React.FC = () => {
     });
   };
 
+  const handleTimerChange = (time: number | null) => {
+    setTimerDuration(time);
+    setTimeLeft(time || Infinity);
+  };
+
+  const handleLanguageChange = async (language: string) => {
+    setCurrentLanguage(language);
+    try {
+      const newSnippet = await fetchSnippet(language);
+      setSnippet(newSnippet);
+      resetTest();
+    } catch (error) {
+      console.error('Error fetching snippet:', error);
+    }
+  };
+
+  const handleNewSnippet = async () => {
+    try {
+      const newSnippet = await fetchSnippet(currentLanguage);
+      setSnippet(newSnippet);
+      resetTest();
+    } catch (error) {
+      console.error('Error fetching snippet:', error);
+    }
+  };
+
+  const resetTest = () => {
+    setTypedText('');
+    setStartTime(null);
+    setTimeLeft(timerDuration || Infinity);
+  };
 
   const calculateWPM = () => {
     const wordsTyped = typedText.split(' ').length;
@@ -151,6 +185,13 @@ const TypingTest: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      <div className={styles.optionsContainer}>
+        <OptionsBar 
+          onTimerChange={handleTimerChange}
+          onLanguageChange={handleLanguageChange}
+          onNewSnippet={handleNewSnippet}
+        />
+      </div>
       <div className={styles.header}>
         <div className={styles.timer}>{timeLeft}s</div>
         <div className={styles.wpm}>WPM: {calculateWPM()}</div>
