@@ -38,7 +38,7 @@ const TypingTest: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (startTime) {
+    if (startTime && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
@@ -55,17 +55,39 @@ const TypingTest: React.FC = () => {
   }, [startTime]);
 
   const handleTyping = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!startTime) {
+    const { key } = e;
+    e.preventDefault();
+
+    // Only start timer on actual character input, not on modifier keys
+    if (!startTime && key.length === 1) {
       setStartTime(Date.now());
     }
-    const { key } = e;
+
+    // Ignore modifier keys like Shift
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(key)) {
+      return;
+    }
+
     if (key === 'Backspace') {
       setTypedText(typedText.slice(0, -1));
+    } else if (key === 'Enter') {
+      setTypedText(typedText + '\n');
+    } else if (key === 'Tab') {
+      // Find the next non-space character position
+      let currentPos = typedText.length;
+      let nextNonSpacePos = currentPos;
+      
+      while (nextNonSpacePos < snippet.length && snippet[nextNonSpacePos] === ' ') {
+        nextNonSpacePos++;
+      }
+      
+      // Add all spaces up to the next non-space character
+      const spacesToAdd = snippet.slice(currentPos, nextNonSpacePos);
+      setTypedText(typedText + spacesToAdd);
     } else if (key.length === 1) {
       setTypedText(typedText + key);
     }
-    console.log('Typed text:', typedText);
-
+  
     if (typedText.length === snippet.length - 1) {
       endTest();
     }
@@ -73,41 +95,48 @@ const TypingTest: React.FC = () => {
 
   const endTest = () => {
     const endTime = Date.now();
-    const timeTaken = (endTime - (startTime || 0)) / 1000; // in seconds
+    const timeTaken = (endTime - (startTime || 0)) / 1000;
     const wordsTyped = typedText.split(' ').length;
-    const typingSpeed = (wordsTyped / timeTaken) * 60; // words per minute
+    const typingSpeed = (wordsTyped / timeTaken) * 60;
+    const accuracy = calculateAccuracy();
 
     // Store the result in local storage
     const results = JSON.parse(localStorage.getItem('typingResults') || '[]');
-    results.push({ speed: typingSpeed, timestamp: new Date().toISOString() });
+    results.push({ 
+      speed: Math.round(typingSpeed),
+      accuracy: accuracy, 
+      timestamp: new Date().toISOString() 
+    });
     localStorage.setItem('typingResults', JSON.stringify(results));
+    localStorage.setItem('lastSpeed', Math.round(typingSpeed).toString());
+    localStorage.setItem('lastAccuracy', accuracy.toString());
 
-    router.push(`/results?speed=${typingSpeed}`);
+    router.push('/results');
   };
 
   const renderSnippet = () => {
-    console.log('Rendering snippet:', snippet);
     return snippet.split('').map((char, index) => {
       let className = '';
       if (index < typedText.length) {
         className = char === typedText[index] ? styles.correct : styles.incorrect;
+      } else if (index === typedText.length) {
+        className = styles.cursor;
       }
+      
+      // Handle special characters
+      let displayChar = char;
+       if (char === '\n') {
+        displayChar = '↵\n'; // Display enter symbol and actual line break
+      }
+      
       return (
         <span key={index} className={className}>
-          {char}
+          {displayChar}
         </span>
       );
     });
   };
 
-  const renderClock = () => {
-    const rotation = (360 * (60 - timeLeft)) / 60;
-    return (
-      <div className={styles.clock}>
-        <div className={styles.hand} style={{ transform: `rotate(${rotation}deg)` }} />
-      </div>
-    );
-  };
 
   const calculateWPM = () => {
     const wordsTyped = typedText.split(' ').length;

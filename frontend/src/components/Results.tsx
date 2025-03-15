@@ -1,20 +1,26 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import styles from '../styles/Results.module.css';
 
 const Results: React.FC = () => {
-  const searchParams = useSearchParams();
-  const speed = searchParams ? searchParams.get('speed') : null;
-  const [results, setResults] = useState<{ speed: number; timestamp: string }[]>([]);
+  const [results, setResults] = useState<{ 
+    speed: number; 
+    accuracy: number;
+    timestamp: string;
+  }[]>([]);
+  const [lastSpeed, setLastSpeed] = useState<number>(0);
+  const [lastAccuracy, setLastAccuracy] = useState<number>(0);
 
   useEffect(() => {
-    // Retrieve results from local storage
     const storedResults = JSON.parse(localStorage.getItem('typingResults') || '[]');
+    const storedSpeed = parseInt(localStorage.getItem('lastSpeed') || '0');
+    const storedAccuracy = parseInt(localStorage.getItem('lastAccuracy') || '0');
     setResults(storedResults);
+    setLastSpeed(storedSpeed);
+    setLastAccuracy(storedAccuracy);
   }, []);
 
   const formatTimeLabel = (timestamp: string) => {
@@ -42,12 +48,20 @@ const Results: React.FC = () => {
     labels: results.map(result => formatTimeLabel(result.timestamp)),
     datasets: [
       {
-        label: 'Typing Speed (WPM)',
+        label: 'WPM',
         data: results.map(result => result.speed),
         fill: false,
-        backgroundColor: 'rgba(122, 255, 122, 0.4)',
         borderColor: '#7aff7a',
-        tension: 0.4
+        tension: 0.4,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Accuracy %',
+        data: results.map(result => result.accuracy),
+        fill: false,
+        borderColor: '#ff7a7a',
+        tension: 0.4,
+        yAxisID: 'y1'
       }
     ]
   };
@@ -56,17 +70,32 @@ const Results: React.FC = () => {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
-      x: {
+      y: {
+        type: 'linear' as const,
+        display: true,
+        position: 'left' as const,
         grid: {
           color: '#333'
         },
         ticks: {
-          color: '#666',
-          maxRotation: 45,
-          minRotation: 45
+          color: '#7aff7a'
         }
       },
-      y: {
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        min: 0,
+        max: 100,
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          color: '#ff7a7a',
+          stepSize: 20 // This will show ticks at 0, 20, 40, 60, 80, 100
+        }
+      },
+      x: {
         grid: {
           color: '#333'
         },
@@ -80,22 +109,22 @@ const Results: React.FC = () => {
         labels: {
           color: '#666'
         }
-      },
-      tooltip: {
-        callbacks: {
-          title: (context: any) => {
-            const index = context[0].dataIndex;
-            return new Date(results[index].timestamp).toLocaleString();
-          }
-        }
       }
     }
   };
 
   return (
     <div className={styles.container}>
-      <h1>Results</h1>
-      <p>Your typing speed is {speed} words per minute.</p>
+      <div className={styles.stats}>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{lastSpeed}</div>
+          <div className={styles.statLabel}>WPM</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{lastAccuracy}%</div>
+          <div className={styles.statLabel}>Accuracy</div>
+        </div>
+      </div>
       <div className={styles.graphContainer}>
         <div className={styles.chart}>
           <Line data={data} options={options} />

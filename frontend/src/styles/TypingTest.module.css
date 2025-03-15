@@ -11,14 +11,13 @@
 
 .snippet {
   font-size: 24px;
-  margin-bottom: 20px;
+  line-height: 1.5;
   white-space: pre-wrap;
-  border: 1px solid #6272a4;
-  padding: 10px;
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
   width: 80%;
   max-width: 800px;
-  background-color: #44475a;
-  color: #f8f8f2;
 }
 
 .correct {
@@ -75,10 +74,12 @@
   width: 100%;
   max-width: 800px;
   font-size: 1.5rem;
-  line-height: 2.5;
-  letter-spacing: 0.05em;
+  line-height: 2;
+  white-space: pre-wrap;
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
   outline: none;
-  text-align: left;
 }
 
 .footer {
@@ -88,4 +89,26 @@
 
 .hint {
   opacity: 0.5;
+}
+
+.cursor {
+  position: relative;
+  line-height: 1.5;
+}
+
+.cursor::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 2px;  /* Adjust top position */
+  width: 2px;
+  height: 24px;  /* Fixed height instead of 100% */
+  background-color: #7aff7a;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
 }
