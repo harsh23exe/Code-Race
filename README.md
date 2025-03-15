@@ -4,16 +4,19 @@ Code Race is an engaging platform designed to test and reveal your typing speed 
 ## Installation
 To get started with Code Race, follow these steps:
 1. npm install nestjs 
-2. Clone the repository: $ git clone https://github.com/harsh23exe/Code-Race.git 
-3. Navigate to the project directory: $ cd Code-Race
-4. Install the dependencies: $ npm install    
+2. Clone the repository:
+    git clone https://github.com/harsh23exe/Code-Race.git 
+3. Navigate to the project directory: 
+    cd Code-Race
+4. Install the dependencies: 
+    npm install    
 
  
 ## Usage
 To start using Code Race, execute the following command:
 
-    $ cd backend | npm run start
-    $ cd frontend | npm run start
+    cd backend | npm run start
+    cd frontend | npm run start
 
 
 This will launch the application, and you can begin testing your typing speed. Follow the on-screen instructions to select a coding language and start a challenge.
