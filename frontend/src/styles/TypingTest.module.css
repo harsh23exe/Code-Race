@@ -4,6 +4,9 @@
   align-items: center;
   margin-top: 50px;
   outline: none;
+  gap: 2rem;
+  padding: 2rem;
+  height: calc(100vh - 120px);
 }
 
 .snippet {
@@ -19,11 +22,12 @@
 }
 
 .correct {
-  color: #50fa7b;
+  color: #7aff7a;
 }
 
 .incorrect {
-  color: #ff5555;
+  color: #ff5f5f;
+  text-decoration: underline;
 }
 
 .button {
@@ -58,4 +62,30 @@
   top: 50%;
   left: 50%;
   transform-origin: left;
+}
+
+.header {
+  display: flex;
+  gap: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.textDisplay {
+  width: 100%;
+  max-width: 800px;
+  font-size: 1.5rem;
+  line-height: 2.5;
+  letter-spacing: 0.05em;
+  outline: none;
+  text-align: left;
+}
+
+.footer {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.hint {
+  opacity: 0.5;
 }

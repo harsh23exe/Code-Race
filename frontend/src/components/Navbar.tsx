@@ -6,11 +6,11 @@ const Navbar: React.FC = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
-        <Link href="/home" className={styles.logo}>
+        <Link href="/" className={styles.logo}>
           Code Race
         </Link>
         <div className={styles.links}>
-          <Link href="/home" className={styles.link}>
+          <Link href="/" className={styles.link}>
             Home
           </Link>
           <Link href="/typing-test" className={styles.link}>

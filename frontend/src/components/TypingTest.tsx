@@ -109,16 +109,35 @@ const TypingTest: React.FC = () => {
     );
   };
 
+  const calculateWPM = () => {
+    const wordsTyped = typedText.split(' ').length;
+    const timeTaken = (Date.now() - (startTime || 0)) / 1000 / 60; // in minutes
+    return Math.round(wordsTyped / timeTaken);
+  };
+
+  const calculateAccuracy = () => {
+    const correctChars = typedText.split('').filter((char, index) => char === snippet[index]).length;
+    return Math.round((correctChars / typedText.length) * 100);
+  };
+
   return (
-    <div
-      className={styles.container}
-      onKeyDown={handleTyping}
-      tabIndex={0}
-      ref={containerRef}
-    >
-      <h1>Typing Test</h1>
-      {renderClock()}
-      <div className={styles.snippet}>{renderSnippet()}</div>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div className={styles.timer}>{timeLeft}s</div>
+        <div className={styles.wpm}>WPM: {calculateWPM()}</div>
+        <div className={styles.accuracy}>ACC: {calculateAccuracy()}%</div>
+      </div>
+      <div 
+        className={styles.textDisplay} 
+        tabIndex={0} 
+        ref={containerRef}
+        onKeyDown={handleTyping}
+      >
+        {renderSnippet()}
+      </div>
+      <div className={styles.footer}>
+        <div className={styles.hint}>Press any key to start typing</div>
+      </div>
     </div>
   );
 };

@@ -1,37 +1,37 @@
 .navbar {
-  background-color: #282a36;
+  background-color: #2a2a2a;
   color: #f8f8f2;
-  padding: 10px 0;
+  padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 1rem;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: bold;
-  color: #f8f8f2;
+  color: #7aff7a;
 }
 
 .links {
   display: flex;
-  gap: 20px;
+  gap: 1.5rem;
 }
 
 .link {
-  color: #f8f8f2;
+  color: #666;
   text-decoration: none;
   font-size: 18px;
-  transition: color 0.3s;
+  transition: color 0.2s ease;
 }
 
 .link:hover {
-  color: #50fa7b;
+  color: #e2e2e2;
 }
