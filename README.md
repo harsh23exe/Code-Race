@@ -20,6 +20,15 @@ Code Race is an engaging platform designed to test and reveal your typing speed 
 - **Styling**: CSS Modules
 
 
+## Screenshots
+
+### Typing Test
+![Typing Test](./assets/TypingTest.png)
+
+### Results & Analytics
+![Results](./assets/graph.png)
+
+
 
 ## Run Locally  
 Clone the project  
@@ -47,15 +56,6 @@ cd backend | npm run start
 cd frontend | PORT=3001 npm run start
 
 ~~~  
-
-
-## Screenshots
-
-### Typing Test
-![Typing Test](./assets/TypingTest.png)
-
-### Results & Analytics
-![Results](./assets/graph.png)
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for more details.

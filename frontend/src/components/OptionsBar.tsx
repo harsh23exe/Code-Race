@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchLanguages } from '../utils/api';
 import styles from '../styles/OptionsBar.module.css';
 
 interface OptionsBarProps {
@@ -17,8 +18,22 @@ const OptionsBar: React.FC<OptionsBarProps> = ({
   const [activeOption, setActiveOption] = useState('time');
   const [showTimeOptions, setShowTimeOptions] = useState(false);
   const [showLanguageOptions, setShowLanguageOptions] = useState(false);
+  const [languages, setLanguages] = useState<string[]>([]);
 
-  const languages = ['JavaScript', 'Python', 'Java', 'C++', 'TypeScript'];
+  useEffect(() => {
+    const loadLanguages = async () => {
+      try {
+        const data = await fetchLanguages();
+        if (data && data.languages) {
+          setLanguages(data.languages);
+        }
+      } catch (error) {
+        console.error('Error loading languages:', error);
+      }
+    };
+
+    loadLanguages();
+  }, []);
 
   const handleOptionClick = (option: string) => {
     setActiveOption(option);
