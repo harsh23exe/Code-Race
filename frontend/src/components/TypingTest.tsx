@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchSnippet } from '../utils/api';
 import styles from '../styles/TypingTest.module.css';
@@ -10,112 +10,146 @@ const TypingTest: React.FC = () => {
   const [snippet, setSnippet] = useState('');
   const [typedText, setTypedText] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds timer
+  const [timeLeft, setTimeLeft] = useState(60);
   const [currentLanguage, setCurrentLanguage] = useState('JavaScript');
-  const [timerDuration, setTimerDuration] = useState<number | null>(null);
+  const [timerDuration, setTimerDuration] = useState<number | null>(60);
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams ? searchParams.get('language') : null;
   const containerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickRef = useRef<number>(0);
 
+  // Calculate accuracy memoized
+  const calculateAccuracy = useCallback(() => {
+    if (typedText.length === 0) return 100;
+    const correctChars = typedText.split('')
+      .filter((char, index) => char === snippet[index]).length;
+    return Math.round((correctChars / typedText.length) * 100);
+  }, [typedText, snippet]);
+
+  // Calculate WPM memoized
+  const calculateWPM = useCallback(() => {
+    if (!startTime) return 0;
+    const wordsTyped = typedText.split(' ').length;
+    const timeTaken = (Date.now() - startTime) / 1000 / 60; // in minutes
+    return Math.round(wordsTyped / timeTaken) || 0;
+  }, [typedText, startTime]);
+
+  // End test function memoized
+  const endTest = useCallback(() => {
+    if (!startTime) return;
+    const endTime = Date.now();
+    const timeTaken = (endTime - startTime) / 1000;
+    const wordsTyped = typedText.split(' ').length;
+    const typingSpeed = Math.round((wordsTyped / timeTaken) * 60);
+    const accuracy = calculateAccuracy();
+
+    const results = JSON.parse(localStorage.getItem('typingResults') || '[]');
+    results.push({ 
+      speed: typingSpeed,
+      accuracy, 
+      timestamp: new Date().toISOString() 
+    });
+    localStorage.setItem('typingResults', JSON.stringify(results));
+    localStorage.setItem('lastSpeed', typingSpeed.toString());
+    localStorage.setItem('lastAccuracy', accuracy.toString());
+
+    router.push('/results');
+  }, [startTime, typedText, calculateAccuracy, router]);
+
+  // Reset test function memoized
+  const resetTest = useCallback(() => {
+    setTypedText('');
+    setStartTime(null);
+    setTimeLeft(timerDuration || 60);
+  }, [timerDuration]);
+
+  // Timer effect
+  useEffect(() => {
+    if (startTime && timeLeft > 0) {
+      lastTickRef.current = performance.now();
+      
+      timerRef.current = setInterval(() => {
+        const now = performance.now();
+        const deltaTime = now - lastTickRef.current;
+        lastTickRef.current = now;
+
+        setTimeLeft((prevTime) => {
+          const newTime = Math.max(0, prevTime - deltaTime / 1000);
+          if (newTime <= 0) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+            }
+            endTest();
+            return 0;
+          }
+          return newTime;
+        });
+      }, 100); // Update more frequently
+
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+      };
+    }
+  }, [startTime, endTest]);
+
+  // Load snippet effect
   useEffect(() => {
     const loadSnippet = async () => {
-      if (language) {
-        try {
-          const snippet = await fetchSnippet(language);
-          setSnippet(snippet);
-          console.log('Fetched snippet:', snippet);
-        } catch (error) {
-          console.error('Error fetching snippet:', error);
-        }
+      try {
+        const newSnippet = await fetchSnippet(language || currentLanguage);
+        setSnippet(newSnippet);
+      } catch (error) {
+        console.error('Error fetching snippet:', error);
       }
     };
-
     loadSnippet();
-  }, [language]);
+  }, [language, currentLanguage]);
 
+  // Focus effect
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.focus();
     }
   }, []);
 
-  useEffect(() => {
-    if (startTime && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            clearInterval(timer);
-            endTest();
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [startTime]);
-
-  const handleTyping = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleTyping = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     const { key } = e;
     e.preventDefault();
 
-    // Only start timer on actual character input, not on modifier keys
     if (!startTime && key.length === 1) {
       setStartTime(Date.now());
     }
 
-    // Ignore modifier keys like Shift
     if (['Shift', 'Control', 'Alt', 'Meta'].includes(key)) {
       return;
     }
 
     if (key === 'Backspace') {
-      setTypedText(typedText.slice(0, -1));
+      setTypedText(prev => prev.slice(0, -1));
     } else if (key === 'Enter') {
-      setTypedText(typedText + '\n');
+      setTypedText(prev => prev + '\n');
     } else if (key === 'Tab') {
-      // Find the next non-space character position
-      let currentPos = typedText.length;
+      const currentPos = typedText.length;
       let nextNonSpacePos = currentPos;
       
       while (nextNonSpacePos < snippet.length && snippet[nextNonSpacePos] === ' ') {
         nextNonSpacePos++;
       }
       
-      // Add all spaces up to the next non-space character
       const spacesToAdd = snippet.slice(currentPos, nextNonSpacePos);
-      setTypedText(typedText + spacesToAdd);
+      setTypedText(prev => prev + spacesToAdd);
     } else if (key.length === 1) {
-      setTypedText(typedText + key);
+      setTypedText(prev => prev + key);
     }
-  
-    if (typedText.length === snippet.length - 1) {
+
+    if (typedText.length >= snippet.length - 1) {
       endTest();
     }
-  };
-
-  const endTest = () => {
-    const endTime = Date.now();
-    const timeTaken = (endTime - (startTime || 0)) / 1000;
-    const wordsTyped = typedText.split(' ').length;
-    const typingSpeed = (wordsTyped / timeTaken) * 60;
-    const accuracy = calculateAccuracy();
-
-    // Store the result in local storage
-    const results = JSON.parse(localStorage.getItem('typingResults') || '[]');
-    results.push({ 
-      speed: Math.round(typingSpeed),
-      accuracy: accuracy, 
-      timestamp: new Date().toISOString() 
-    });
-    localStorage.setItem('typingResults', JSON.stringify(results));
-    localStorage.setItem('lastSpeed', Math.round(typingSpeed).toString());
-    localStorage.setItem('lastAccuracy', accuracy.toString());
-
-    router.push('/results');
-  };
+  }, [startTime, typedText, snippet, endTest]);
 
   const renderSnippet = () => {
     return snippet.split('').map((char, index) => {
@@ -166,22 +200,8 @@ const TypingTest: React.FC = () => {
     }
   };
 
-  const resetTest = () => {
-    setTypedText('');
-    setStartTime(null);
-    setTimeLeft(timerDuration || Infinity);
-  };
-
-  const calculateWPM = () => {
-    const wordsTyped = typedText.split(' ').length;
-    const timeTaken = (Date.now() - (startTime || 0)) / 1000 / 60; // in minutes
-    return Math.round(wordsTyped / timeTaken);
-  };
-
-  const calculateAccuracy = () => {
-    const correctChars = typedText.split('').filter((char, index) => char === snippet[index]).length;
-    return Math.round((correctChars / typedText.length) * 100);
-  };
+  // Update timeLeft display with rounded value
+  const displayTime = Math.ceil(timeLeft);
 
   return (
     <div className={styles.container}>
@@ -193,7 +213,7 @@ const TypingTest: React.FC = () => {
         />
       </div>
       <div className={styles.header}>
-        <div className={styles.timer}>{timeLeft}s</div>
+        <div className={styles.timer}>{displayTime}s</div>
         <div className={styles.wpm}>WPM: {calculateWPM()}</div>
         <div className={styles.accuracy}>ACC: {calculateAccuracy()}%</div>
       </div>

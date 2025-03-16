@@ -1,0 +1,19 @@
+class TreeNode {
+    constructor(val, left = null, right = null) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+function inorderTraversal(root) {
+    const result = [];
+    function inorder(node) {
+        if (!node) return;
+        inorder(node.left);
+        result.push(node.val);
+        inorder(node.right);
+    }
+    inorder(root);
+    return result;
+}

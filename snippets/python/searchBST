@@ -1,0 +1,5 @@
+def searchBST(root, val):
+    if not root: return False
+    if root.val == val: return True
+    if val < root.val: return searchBST(root.left, val)
+    return searchBST(root.right, val)

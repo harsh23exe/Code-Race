@@ -1,9 +1,40 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Line } from 'react-chartjs-2';
-import 'chart.js/auto';
+import dynamic from 'next/dynamic';
 import styles from '../styles/Results.module.css';
+
+// First import Chart.js components
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+// Then dynamically import the Line component
+const Line = dynamic(
+  () => import('react-chartjs-2').then((mod) => mod.Line),
+  { 
+    ssr: false,
+    loading: () => <div>Loading chart...</div>
+  }
+);
 
 const Results: React.FC = () => {
   const [results, setResults] = useState<{ 
@@ -15,6 +46,7 @@ const Results: React.FC = () => {
   const [lastAccuracy, setLastAccuracy] = useState<number>(0);
 
   useEffect(() => {
+    // Move data fetching to client side
     const storedResults = JSON.parse(localStorage.getItem('typingResults') || '[]');
     const storedSpeed = parseInt(localStorage.getItem('lastSpeed') || '0');
     const storedAccuracy = parseInt(localStorage.getItem('lastAccuracy') || '0');
@@ -50,17 +82,17 @@ const Results: React.FC = () => {
       {
         label: 'WPM',
         data: results.map(result => result.speed),
-        fill: false,
         borderColor: '#7aff7a',
-        tension: 0.4,
+        backgroundColor: '#7aff7a',
+        tension: 0,
         yAxisID: 'y'
       },
       {
         label: 'Accuracy %',
         data: results.map(result => result.accuracy),
-        fill: false,
         borderColor: '#ff7a7a',
-        tension: 0.4,
+        backgroundColor: '#ff7a7a',
+        tension: 0,
         yAxisID: 'y1'
       }
     ]
@@ -68,18 +100,15 @@ const Results: React.FC = () => {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
     scales: {
       y: {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
-        grid: {
-          color: '#333'
-        },
-        ticks: {
-          color: '#7aff7a'
-        }
       },
       y1: {
         type: 'linear' as const,
@@ -90,26 +119,7 @@ const Results: React.FC = () => {
         grid: {
           drawOnChartArea: false,
         },
-        ticks: {
-          color: '#ff7a7a',
-          stepSize: 20 // This will show ticks at 0, 20, 40, 60, 80, 100
-        }
       },
-      x: {
-        grid: {
-          color: '#333'
-        },
-        ticks: {
-          color: '#666'
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        labels: {
-          color: '#666'
-        }
-      }
     }
   };
 
@@ -126,9 +136,11 @@ const Results: React.FC = () => {
         </div>
       </div>
       <div className={styles.graphContainer}>
-        <div className={styles.chart}>
-          <Line data={data} options={options} />
-        </div>
+        {results.length > 0 && (
+          <div className={styles.chart}>
+            <Line data={data} options={options} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,12 +1,13 @@
-import React from 'react';
+"use client";
+
+import React, { Suspense } from 'react';
 import TypingTest from '../../components/TypingTest';
+import Loading from '../../components/Loading';
 
-const TypingTestPage: React.FC = () => {
+export default function TypingTestPage() {
   return (
-    <div>
+    <Suspense fallback={<Loading />}>
       <TypingTest />
-    </div>
+    </Suspense>
   );
-};
-
-export default TypingTestPage;
+}

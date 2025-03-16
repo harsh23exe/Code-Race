@@ -1,0 +1,6 @@
+function dfs(root) {
+    if (!root) return;
+    console.log(root.val);
+    dfs(root.left);
+    dfs(root.right);
+}
