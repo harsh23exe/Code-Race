@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000'; // Adjust the base URL as needed
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'; // Use env variable in production
 
 export const fetchSnippet = async (language: string) => {
   try {
