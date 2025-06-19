@@ -8,24 +8,34 @@ export class CodeSnippetsService {
   private readonly snippetsDir: string;
 
   constructor() {
-    // Handle both development and production paths
-    const isDist = __dirname.includes('dist');
-    this.snippetsDir = path.join(
-      __dirname,
-      '..',                // go up to src or dist
-      isDist ? '..' : '',  // if in dist, go up one more level
-      'snippets'          // then into snippets
-    );
-    
-    // Log the resolved path for debugging
-    this.logger.log(`Initializing with snippets directory: ${this.snippetsDir}`);
-    
-    // Verify the directory exists on service initialization
-    if (!fs.existsSync(this.snippetsDir)) {
-      this.logger.error(`Failed to find snippets directory at: ${this.snippetsDir}`);
+    // Handle different environments:
+    // - Local development: backend/src/code-snippets -> backend/snippets
+    // - Vercel serverless: /var/task/backend/src/code-snippets -> /var/task/snippets
+    const possiblePaths = [
+      // For Vercel serverless (files are at function root)
+      path.join(process.cwd(), 'snippets'),
+      // For local development
+      path.join(__dirname, '..', '..', 'snippets'),
+      // Fallback
+      path.join(__dirname, '..', 'snippets'),
+    ];
+
+    // Try each path until we find one that exists
+    for (const snippetPath of possiblePaths) {
+      if (fs.existsSync(snippetPath)) {
+        this.snippetsDir = snippetPath;
+        this.logger.log(`Found snippets directory at: ${this.snippetsDir}`);
+        break;
+      }
+    }
+
+    // If no path was found, use the first one and let it fail with a clear error
+    if (!this.snippetsDir) {
+      this.snippetsDir = possiblePaths[0];
+      this.logger.error(`Failed to find snippets directory. Tried paths:`, possiblePaths);
       this.logger.debug(`Current directory: ${__dirname}`);
-      this.logger.debug(`Available files in parent directory:`, fs.readdirSync(path.join(__dirname, '..')));
-      throw new Error(`Snippets directory not found at ${this.snippetsDir}`);
+      this.logger.debug(`Process cwd: ${process.cwd()}`);
+      throw new Error(`Snippets directory not found. Tried: ${possiblePaths.join(', ')}`);
     }
   }
 

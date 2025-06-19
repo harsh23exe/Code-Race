@@ -1,5 +1,0 @@
-def dfs(root):
-    if not root: return
-    print(root.val)  
-    dfs(root.left)
-    dfs(root.right)
