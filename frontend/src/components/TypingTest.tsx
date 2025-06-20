@@ -30,10 +30,20 @@ const TypingTest: React.FC = () => {
 
   // Calculate WPM memoized
   const calculateWPM = useCallback(() => {
-    if (!startTime) return 0;
-    const wordsTyped = typedText.split(' ').length;
-    const timeTaken = (Date.now() - startTime) / 1000 / 60; // in minutes
-    return Math.round(wordsTyped / timeTaken) || 0;
+    if (!startTime || typedText.length === 0) return 0;
+
+    const timeElapsedInSeconds = (Date.now() - startTime) / 1000;
+
+    // To prevent WPM spikes, wait for at least 2 seconds before calculating
+    if (timeElapsedInSeconds < 2) {
+      return 0;
+    }
+
+    const wordsTyped = typedText.length / 5; // Using 5 chars per word as a standard
+    const timeElapsedInMinutes = timeElapsedInSeconds / 60;
+    const wpm = Math.round(wordsTyped / timeElapsedInMinutes);
+
+    return wpm;
   }, [typedText, startTime]);
 
   // End test function memoized
