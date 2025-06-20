@@ -15,17 +15,15 @@ const OptionsBar: React.FC<OptionsBarProps> = ({
   onLanguageChange, 
   onNewSnippet 
 }) => {
-  const [activeOption, setActiveOption] = useState('time');
-  const [showTimeOptions, setShowTimeOptions] = useState(false);
-  const [showLanguageOptions, setShowLanguageOptions] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [languages, setLanguages] = useState<string[]>([]);
 
   useEffect(() => {
     const loadLanguages = async () => {
       try {
         const data = await fetchLanguages();
-        if (data && data.languages) {
-          setLanguages(data.languages);
+        if (data ) {
+          setLanguages(data);
         }
       } catch (error) {
         console.error('Error loading languages:', error);
@@ -35,72 +33,78 @@ const OptionsBar: React.FC<OptionsBarProps> = ({
     loadLanguages();
   }, []);
 
-  const handleOptionClick = (option: string) => {
-    setActiveOption(option);
-    setShowTimeOptions(option === 'time');
-    setShowLanguageOptions(option === 'language');
+  const handleMouseEnter = (option: string) => {
+    setActiveDropdown(option);
+  };
+
+  const handleMouseLeave = () => {
+    setActiveDropdown(null);
   };
 
   const handleTimeSelection = (time: number | null) => {
     onTimerChange(time);
-    setShowTimeOptions(false);
+    setActiveDropdown(null);
   };
 
   const handleLanguageSelection = (language: string) => {
     onLanguageChange(language);
-    setShowLanguageOptions(false);
+    setActiveDropdown(null);
   };
 
   return (
     <div className={styles.optionsContainer}>
       <div className={styles.optionsBar}>
         <div
-          className={`${styles.option} ${activeOption === 'time' ? styles.active : ''}`}
-          onClick={() => handleOptionClick('time')}
+          className={styles.optionWrapper}
+          onMouseEnter={() => handleMouseEnter('time')}
+          onMouseLeave={handleMouseLeave}
         >
-          Time
+          <div className={`${styles.option} ${activeDropdown === 'time' ? styles.active : ''}`}>
+            Time
+          </div>
+          {activeDropdown === 'time' && (
+            <div className={styles.dropdown}>
+              <div className={styles.dropdownOption} onClick={() => handleTimeSelection(30)}>
+                30s
+              </div>
+              <div className={styles.dropdownOption} onClick={() => handleTimeSelection(60)}>
+                60s
+              </div>
+              <div className={styles.dropdownOption} onClick={() => handleTimeSelection(null)}>
+                Complete Text
+              </div>
+            </div>
+          )}
         </div>
         <div
-          className={`${styles.option} ${activeOption === 'language' ? styles.active : ''}`}
-          onClick={() => handleOptionClick('language')}
+          className={styles.optionWrapper}
+          onMouseEnter={() => handleMouseEnter('language')}
+          onMouseLeave={handleMouseLeave}
         >
-          Language
+          <div className={`${styles.option} ${activeDropdown === 'language' ? styles.active : ''}`}>
+            Language
+          </div>
+          {activeDropdown === 'language' && (
+            <div className={styles.dropdown}>
+              {languages.map((lang) => (
+                <div 
+                  key={lang}
+                  className={styles.dropdownOption} 
+                  onClick={() => handleLanguageSelection(lang)}
+                >
+                  {lang}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div
-          className={`${styles.option}`}
+          className={styles.option}
           onClick={onNewSnippet}
         >
           New Snippet
         </div>
       </div>
-      
-      {showTimeOptions && (
-        <div className={styles.dropdown}>
-          <div className={styles.dropdownOption} onClick={() => handleTimeSelection(30)}>
-            30s
-          </div>
-          <div className={styles.dropdownOption} onClick={() => handleTimeSelection(60)}>
-            60s
-          </div>
-          <div className={styles.dropdownOption} onClick={() => handleTimeSelection(null)}>
-            Complete Text
-          </div>
-        </div>
-      )}
-
-      {showLanguageOptions && (
-        <div className={styles.dropdown}>
-          {languages.map((lang) => (
-            <div 
-              key={lang}
-              className={styles.dropdownOption} 
-              onClick={() => handleLanguageSelection(lang)}
-            >
-              {lang}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

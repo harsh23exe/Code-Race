@@ -9,6 +9,11 @@
   z-index: 100;
 }
 
+.optionWrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .optionsBar {
   display: flex;
   justify-content: center;
@@ -40,10 +45,12 @@
 .dropdown {
   position: absolute;
   top: 100%;
+  left: 0;
   background-color: #2a2a2a;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 101;
+  min-width: 100%;
 }
 
 .dropdownOption {
@@ -51,6 +58,7 @@
   color: #666;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .dropdownOption:hover {
