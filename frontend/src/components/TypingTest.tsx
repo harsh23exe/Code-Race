@@ -7,18 +7,23 @@ import styles from '../styles/TypingTest.module.css';
 import OptionsBar from './OptionsBar';
 
 const TypingTest: React.FC = () => {
+  
   const [snippet, setSnippet] = useState('');
   const [typedText, setTypedText] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentLanguage, setCurrentLanguage] = useState('JavaScript');
   const [timerDuration, setTimerDuration] = useState<number | null>(60);
+  const [wpmData, setWpmData] = useState<{ second: number; wpm: number }[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams ? searchParams.get('language') : null;
   const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
+  const wpmTrackingRef = useRef<NodeJS.Timeout | null>(null);
+  const typedTextLengthRef = useRef<number>(0);
+  const typedTextRef = useRef('');
 
   // Calculate accuracy memoized
   const calculateAccuracy = useCallback(() => {
@@ -49,9 +54,16 @@ const TypingTest: React.FC = () => {
   // End test function memoized
   const endTest = useCallback(() => {
     if (!startTime) return;
+    
+    // Clean up WPM tracking interval
+    if (wpmTrackingRef.current) {
+      clearInterval(wpmTrackingRef.current);
+      wpmTrackingRef.current = null;
+    }
+    
     const endTime = Date.now();
     const timeTaken = (endTime - startTime) / 1000;
-    const wordsTyped = typedText.split(' ').length;
+    const wordsTyped = typedText.length / 5; // Using 5 chars per word as a standard
     const typingSpeed = Math.round((wordsTyped / timeTaken) * 60);
     const accuracy = calculateAccuracy();
 
@@ -64,15 +76,30 @@ const TypingTest: React.FC = () => {
     localStorage.setItem('typingResults', JSON.stringify(results));
     localStorage.setItem('lastSpeed', typingSpeed.toString());
     localStorage.setItem('lastAccuracy', accuracy.toString());
+    localStorage.setItem('lastWpmData', JSON.stringify(wpmData));
 
     router.push('/results');
-  }, [startTime, typedText, calculateAccuracy, router]);
+  }, [startTime, typedText, calculateAccuracy, router, wpmData]);
 
   // Reset test function memoized
   const resetTest = useCallback(() => {
+    // Clean up WPM tracking interval
+    if (wpmTrackingRef.current) {
+      clearInterval(wpmTrackingRef.current);
+      wpmTrackingRef.current = null;
+    }
+    
     setTypedText('');
     setStartTime(null);
     setTimeLeft(timerDuration || 60);
+    setWpmData([]);
+    typedTextLengthRef.current = 0;
+    // Clear WPM data from localStorage when resetting
+    try {
+      localStorage.removeItem('lastWpmData');
+    } catch (error) {
+      console.error('Error clearing WPM data from localStorage:', error);
+    }
   }, [timerDuration]);
 
   // Timer effect
@@ -104,7 +131,51 @@ const TypingTest: React.FC = () => {
         }
       };
     }
-  }, [startTime, endTest]);
+  }, [startTime, endTest, timeLeft]);
+
+  // WPM tracking effect
+  useEffect(() => {
+    console.log('WPM tracking useEffect triggered:', { startTime, hasStartTime: !!startTime });
+    
+    if (startTime) {
+      console.log('Starting WPM tracking interval');
+      
+      wpmTrackingRef.current = setInterval(() => {
+        const timeElapsedInSeconds = (Date.now() - startTime) / 1000;
+        // Use the latest typedText for WPM calculation
+        const wordsTyped = typedTextRef.current.length / 5;
+        const timeElapsedInMinutes = timeElapsedInSeconds / 60;
+        const currentWpm = timeElapsedInMinutes > 0 ? Math.round(wordsTyped / timeElapsedInMinutes) : 0;
+        const second = Math.floor(timeElapsedInSeconds);
+
+        setWpmData(prev => {
+          // Only append if this second is not already present
+          if (prev.length > 0 && prev[prev.length - 1].second === second) return prev;
+          const newData = [...prev, { second, wpm: currentWpm }];
+          try {
+            localStorage.setItem('lastWpmData', JSON.stringify(newData));
+          } catch (error) {
+            console.error('Error saving WPM data to localStorage:', error);
+          }
+          return newData;
+        });
+      }, 1000);
+
+      return () => {
+        console.log('Cleaning up WPM tracking interval');
+        if (wpmTrackingRef.current) {
+          clearInterval(wpmTrackingRef.current);
+        }
+      };
+    } else {
+      console.log('WPM tracking not started - no startTime');
+    }
+  }, [startTime]);
+
+  // Update typedTextLengthRef when typedText changes
+  useEffect(() => {
+    typedTextLengthRef.current = typedText.length;
+  }, [typedText]);
 
   // Load snippet effect
   useEffect(() => {
@@ -131,7 +202,16 @@ const TypingTest: React.FC = () => {
     e.preventDefault();
 
     if (!startTime && key.length === 1) {
+      console.log('Test starting - setting startTime');
       setStartTime(Date.now());
+      // Clear previous WPM data when starting a new test
+      setWpmData([]);
+      try {
+        localStorage.removeItem('lastWpmData');
+        console.log('Cleared previous WPM data from localStorage');
+      } catch (error) {
+        console.error('Error clearing WPM data from localStorage:', error);
+      }
     }
 
     if (['Shift', 'Control', 'Alt', 'Meta'].includes(key)) {
@@ -212,6 +292,11 @@ const TypingTest: React.FC = () => {
 
   // Update timeLeft display with rounded value
   const displayTime = Math.ceil(timeLeft);
+
+  // Update typedTextRef when typedText changes
+  useEffect(() => {
+    typedTextRef.current = typedText;
+  }, [typedText]);
 
   return (
     <div className={styles.container}>
